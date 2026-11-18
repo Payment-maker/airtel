@@ -1,0 +1,1449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>UPI Transaction History & Receipt</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: #111827;
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    .app-shell {
+      width: 100%;
+      max-width: 430px;
+      background-color: #f4f6fb;
+      min-height: 100vh;
+      position: relative;
+      overflow-x: hidden;
+      box-shadow: 0 0 30px rgba(0, 0, 0, 0.4);
+    }
+
+    /* ================= SCREEN 1: TRANSACTION HISTORY ================= */
+    #historyScreen {
+      display: block;
+      padding-bottom: 30px;
+    }
+
+    .history-header {
+      background: #f4f6fb;
+      padding: 16px 16px 12px;
+      display: flex;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .circle-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: 1px solid #d8dee9;
+      background: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: #1f2937;
+      flex-shrink: 0;
+    }
+
+    .circle-btn:active {
+      background: #e5e7eb;
+    }
+
+    .history-title {
+      flex: 1;
+      text-align: center;
+      font-size: 19px;
+      font-weight: 700;
+      color: #181c25;
+      margin-right: 38px;
+    }
+
+    .tabs-row {
+      display: flex;
+      gap: 10px;
+      padding: 8px 16px 14px;
+      background: #f4f6fb;
+    }
+
+    .tab-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border-radius: 999px;
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+    }
+
+    .tab-pill.active {
+      background: #22252a;
+      color: #ffffff;
+    }
+
+    .tab-pill.inactive {
+      background: #e9ecf5;
+      color: #2b303a;
+    }
+
+    /* Balance Card with **** */
+    .balance-card-container {
+      padding: 0 16px 14px;
+      background: #f4f6fb;
+    }
+
+    .balance-card {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 16px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      border: 1px solid #eef1f6;
+    }
+
+    .balance-info .b-label {
+      font-size: 13px;
+      color: #64748b;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-bottom: 4px;
+    }
+
+    .balance-info .b-amount {
+      font-size: 22px;
+      font-weight: 700;
+      color: #111827;
+      letter-spacing: 1px;
+    }
+
+    .add-money-btn {
+      background: #000000;
+      color: #ffffff;
+      border: none;
+      padding: 9px 16px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .filter-bar {
+      background: #eef1f8;
+      padding: 14px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-top: 1px solid #e2e6f0;
+      border-bottom: 1px solid #e2e6f0;
+    }
+
+    .date-range {
+      font-size: 15px;
+      font-weight: 700;
+      color: #181c25;
+    }
+
+    .download-link {
+      display: inline-block;
+      margin-top: 3px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #1976d2;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .filter-btn {
+      background: #e2e6f2;
+      border: none;
+      border-radius: 999px;
+      padding: 8px 14px;
+      font-size: 13.5px;
+      font-weight: 600;
+      color: #252a34;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+    }
+
+    .month-header {
+      padding: 14px 16px 8px;
+      font-size: 14.5px;
+      font-weight: 700;
+      color: #1f2430;
+      background: #f4f6fb;
+    }
+
+    .tx-list {
+      background: #ffffff;
+    }
+
+    .tx-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 15px 16px;
+      border-bottom: 1px solid #f0f2f7;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .tx-item:active {
+      background: #f8fafc;
+    }
+
+    .tx-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .rupee-circle {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #eef1f8;
+      color: #2c3240;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+
+    .tx-info {
+      min-width: 0;
+    }
+
+    .tx-label {
+      font-size: 13.5px;
+      color: #5a6272;
+      margin-bottom: 2px;
+    }
+
+    .tx-upi {
+      font-size: 14.5px;
+      font-weight: 700;
+      color: #181c25;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 195px;
+    }
+
+    .tx-date {
+      font-size: 12px;
+      color: #7b8394;
+      margin-top: 4px;
+    }
+
+    .tx-right {
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .tx-amount {
+      font-size: 15.5px;
+      font-weight: 700;
+    }
+
+    .tx-amount.sent {
+      color: #181c25;
+    }
+
+    .tx-amount.received {
+      color: #18a558;
+    }
+
+    .tx-via {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 5px;
+      font-size: 12px;
+      color: #7b8394;
+      margin-top: 5px;
+    }
+
+    .k-badge {
+      width: 17px;
+      height: 17px;
+      border-radius: 50%;
+      background: #e51c24;
+      color: #ffffff;
+      font-size: 10px;
+      font-weight: 800;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-style: italic;
+    }
+
+    /* ================= SCREEN 2: TRANSACTION DETAIL ================= */
+    #detailScreen {
+      display: none;
+      background: #f2f4f8;
+      min-height: 100vh;
+      padding-bottom: 28px;
+      position: relative;
+    }
+
+    /* Fixed Rounded green header & Fixed Share Button */
+    .detail-green-bg {
+      background-color: #21a653;
+      height: 140px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      position: relative;
+      z-index: 1;
+      border-bottom-left-radius: 28px;
+      border-bottom-right-radius: 28px;
+    }
+
+    .detail-nav-row {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 2px;
+    }
+
+    .detail-back-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.88);
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: #181c25;
+      flex-shrink: 0;
+    }
+
+    .detail-header-title {
+      font-size: 18.5px;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    /* Fixed Share Button styling so it never breaks */
+    .detail-share-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: #ffffff;
+      flex-shrink: 0;
+    }
+
+    .detail-content {
+      padding: 0 14px;
+      margin-top: -68px;
+      position: relative;
+      z-index: 5;
+    }
+
+    .receipt-card {
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 2px 10px rgba(16, 24, 40, 0.06);
+      margin-bottom: 14px;
+      overflow: hidden;
+    }
+
+    .card-top-section {
+      padding: 16px 18px;
+      border-bottom: 1px solid #eef0f5;
+    }
+
+    .micro-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      color: #6b7280;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .party-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .party-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .initials-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: #eef2f9;
+      color: #1f2937;
+      font-size: 15px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .party-name {
+      font-size: 16px;
+      font-weight: 700;
+      color: #111827;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .party-sub {
+      font-size: 12.5px;
+      color: #6b7280;
+      margin-top: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .detail-big-amount {
+      font-size: 18px;
+      font-weight: 700;
+      color: #111827;
+      flex-shrink: 0;
+    }
+
+    .status-section {
+      padding: 15px 18px;
+      cursor: pointer;
+    }
+
+    .status-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .status-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .status-ring {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: #dcfce7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .status-dot {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #16a34a;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .status-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #111827;
+    }
+
+    .status-time {
+      font-size: 12.5px;
+      color: #6b7280;
+      margin-top: 2px;
+    }
+
+    .chevron-icon {
+      transition: transform 0.25s ease;
+      color: #1d4ed8;
+    }
+
+    .chevron-icon.open {
+      transform: rotate(180deg);
+    }
+
+    .timeline-box {
+      display: none;
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px dashed #e5e7eb;
+    }
+
+    .timeline-box.open {
+      display: block;
+    }
+
+    .timeline-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #6b7280;
+      letter-spacing: 0.5px;
+      margin-bottom: 12px;
+    }
+
+    .timeline-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      position: relative;
+      padding-bottom: 18px;
+    }
+
+    .timeline-step:last-child {
+      padding-bottom: 2px;
+    }
+
+    .timeline-step:not(:last-child)::after {
+      content: "";
+      position: absolute;
+      left: 10px;
+      top: 22px;
+      width: 2px;
+      height: calc(100% - 20px);
+      background: #cbd5e1;
+    }
+
+    .step-check {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #18b88a;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      flex-shrink: 0;
+      z-index: 1;
+    }
+
+    .step-text {
+      font-size: 13.5px;
+      font-weight: 600;
+      color: #1f2937;
+      padding-top: 2px;
+    }
+
+    /* Info Card */
+    .info-card {
+      padding: 18px;
+    }
+
+    .info-block {
+      margin-bottom: 16px;
+    }
+
+    .info-block:last-child {
+      margin-bottom: 0;
+    }
+
+    .info-row-between {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .info-heading {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #111827;
+      margin-bottom: 4px;
+    }
+
+    .info-value {
+      font-size: 13.5px;
+      color: #374151;
+      line-height: 1.45;
+      word-break: break-word;
+    }
+
+    .copy-btn {
+      background: none;
+      border: none;
+      color: #1d6ce0;
+      font-size: 13.5px;
+      font-weight: 700;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 6px;
+    }
+
+    .copy-btn:active {
+      background: #eff6ff;
+    }
+
+    .actions-card {
+      padding: 16px 10px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      text-align: center;
+    }
+
+    .action-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+    }
+
+    .action-circle {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: #eef1f7;
+      color: #1f2937;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .action-text {
+      font-size: 12px;
+      font-weight: 500;
+      color: #1f2937;
+      line-height: 1.25;
+    }
+
+    /* UPI Custom Image Footer */
+    .upi-footer {
+      text-align: center;
+      margin-top: 16px;
+      margin-bottom: 10px;
+    }
+
+    .upi-footer small {
+      display: block;
+      font-size: 9px;
+      letter-spacing: 0.8px;
+      font-weight: 700;
+      color: #6b7280;
+      margin-bottom: 4px;
+    }
+
+    .upi-logo-img {
+      height: 20px;
+      object-fit: contain;
+    }
+
+    /* ================= ENTRY MANAGER MODAL ================= */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.65);
+      z-index: 100;
+      justify-content: center;
+      align-items: flex-end;
+    }
+
+    .modal-overlay.open {
+      display: flex;
+    }
+
+    .modal-sheet {
+      width: 100%;
+      max-width: 430px;
+      max-height: 90vh;
+      background: #ffffff;
+      border-radius: 22px 22px 0 0;
+      padding: 18px 16px 28px;
+      overflow-y: auto;
+    }
+
+    .modal-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #e5e7eb;
+      margin-bottom: 14px;
+    }
+
+    .modal-head h3 {
+      font-size: 17px;
+      font-weight: 700;
+      color: #111827;
+    }
+
+    .close-modal {
+      background: #f3f4f6;
+      border: none;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      font-size: 18px;
+      cursor: pointer;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .form-group {
+      margin-bottom: 10px;
+    }
+
+    .form-group.full {
+      grid-column: span 2;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 11.5px;
+      font-weight: 600;
+      color: #374151;
+      margin-bottom: 4px;
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 9px 11px;
+      border: 1px solid #d1d5db;
+      border-radius: 9px;
+      font-size: 13px;
+      color: #111827;
+      background: #f9fafb;
+    }
+
+    .submit-entry-btn {
+      width: 100%;
+      background: #21a653;
+      color: #ffffff;
+      border: none;
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 14.5px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 6px;
+    }
+
+    .manage-list-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #111827;
+      margin: 20px 0 10px;
+      padding-top: 14px;
+      border-top: 1px solid #e5e7eb;
+    }
+
+    .manage-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 12px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      margin-bottom: 8px;
+    }
+
+    .manage-item-info strong {
+      display: block;
+      font-size: 13.5px;
+      color: #111827;
+    }
+
+    .manage-item-info span {
+      font-size: 11.5px;
+      color: #64748b;
+    }
+
+    .delete-btn {
+      background: #fee2e2;
+      color: #dc2626;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 7px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1f2937;
+      color: #ffffff;
+      padding: 9px 18px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 500;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s;
+      z-index: 200;
+    }
+
+    .toast.show {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+
+<div class="app-shell">
+
+  <!-- ==================== SCREEN 1: TRANSACTION HISTORY ==================== -->
+  <div id="historyScreen">
+    <div class="history-header">
+      <button class="circle-btn" onclick="openManager()" title="Add / Manage History">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+      </button>
+      <div class="history-title">Transaction History</div>
+    </div>
+
+    <div class="tabs-row">
+      <button class="tab-pill active" id="tabWallet" onclick="switchTab('wallet')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v3M12 14v3M16 14v3"/>
+        </svg>
+        Saving Account/Wallet
+      </button>
+      <button class="tab-pill inactive" id="tabNcmc" onclick="switchTab('ncmc')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="2" y="5" width="20" height="14" rx="2"/>
+          <line x1="2" y1="10" x2="22" y2="10"/>
+        </svg>
+        NCMC Card
+      </button>
+    </div>
+
+    <!-- Balance Card with **** -->
+    <div class="balance-card-container">
+      <div class="balance-card">
+        <div class="balance-info">
+          <div class="b-label">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            Balance
+          </div>
+          <div class="b-amount">₹****</div>
+        </div>
+        <button class="add-money-btn" onclick="showToast('Add money clicked')">ADD MONEY</button>
+      </div>
+    </div>
+
+    <div class="filter-bar">
+      <div>
+        <div class="date-range" id="dateRangeLabel">19 Oct to 18 Nov</div>
+        <span class="download-link" onclick="showToast('Statement downloaded')">Download statement</span>
+      </div>
+      <button class="filter-btn" onclick="cycleFilter()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+        </svg>
+        <span id="filterText">filter</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </button>
+    </div>
+
+    <div id="groupedListContainer"></div>
+  </div>
+
+  <!-- ==================== SCREEN 2: TRANSACTION DETAIL ==================== -->
+  <div id="detailScreen">
+    <div class="detail-green-bg">
+      <div class="detail-nav-row">
+        <button class="detail-back-btn" onclick="closeDetail()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+        </button>
+        <div class="detail-header-title">Transaction Detail</div>
+        <button class="detail-share-btn" onclick="showToast('Receipt ready to share')">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="18" cy="5" r="3"></circle>
+            <circle cx="6" cy="12" r="3"></circle>
+            <circle cx="18" cy="19" r="3"></circle>
+            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="detail-content">
+      <div class="receipt-card">
+        <div class="card-top-section">
+          <div class="micro-label" id="detailDirectionLabel">PAID TO</div>
+          <div class="party-row">
+            <div class="party-left">
+              <div class="initials-avatar" id="detailInitials">RK</div>
+              <div style="min-width: 0;">
+                <div class="party-name" id="detailPartyName">Rahul Kumar</div>
+                <div class="party-sub" id="detailPartySub">Mobikwik • rahul@mbk</div>
+              </div>
+            </div>
+            <div class="detail-big-amount" id="detailAmount">₹25</div>
+          </div>
+        </div>
+
+        <div class="status-section" onclick="toggleTimeline()">
+          <div class="status-header">
+            <div class="status-left">
+              <div class="status-ring">
+                <div class="status-dot">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                </div>
+              </div>
+              <div>
+                <div class="status-title">payment successful</div>
+                <div class="status-time" id="detailDateTime">today, 5:45 pm</div>
+              </div>
+            </div>
+            <svg id="statusChevron" class="chevron-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </div>
+
+          <div class="timeline-box" id="timelineBox">
+            <div class="timeline-label">STATUS</div>
+            <div class="timeline-step">
+              <div class="step-check">✓</div>
+              <div class="step-text">payment initiated</div>
+            </div>
+            <div class="timeline-step">
+              <div class="step-check">✓</div>
+              <div class="step-text">money credited to bank</div>
+            </div>
+            <div class="timeline-step">
+              <div class="step-check">✓</div>
+              <div class="step-text">order successful</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="receipt-card info-card">
+        <div class="info-block">
+          <div class="info-row-between">
+            <div>
+              <div class="info-heading">UPI Transaction ID</div>
+              <div class="info-value" id="detailTxId">632217707221</div>
+            </div>
+            <button class="copy-btn" onclick="copyText('detailTxId')">Copy</button>
+          </div>
+        </div>
+
+        <div class="info-block" id="blockPaidToOrFrom">
+          <div class="info-heading" id="detailMiddleHeading">Paid To</div>
+          <div class="info-value" id="detailPaidToName">Rahul Kumar</div>
+          <div class="info-value" id="detailPaidToUpi">Mobikwik • rahul@mbk</div>
+        </div>
+
+        <div class="info-block">
+          <div class="info-heading" id="detailBottomHeading">Paid From</div>
+          <div class="info-value" id="detailPaidFromName">Govinda Gangadhar Bhosale</div>
+          <div class="info-value" id="detailPaidFromUpi">Airtel Thanks App • airtel@axis</div>
+          <div class="info-value" id="detailBankLine">AIRTEL PAYMENTS BANK LTD XXXX 2010</div>
+        </div>
+
+        <div class="info-block">
+          <div class="info-row-between">
+            <div>
+              <div class="info-heading">RRN</div>
+              <div class="info-value" id="detailRrn">668683301064</div>
+            </div>
+            <button class="copy-btn" onclick="copyText('detailRrn')">Copy</button>
+          </div>
+        </div>
+
+        <div class="info-block">
+          <div class="info-heading">Notes</div>
+          <div class="info-value" id="detailNotes">Payment from Airtel ThanksApp</div>
+        </div>
+      </div>
+
+      <div class="receipt-card actions-card">
+        <div class="action-item" onclick="closeDetail()">
+          <div class="action-circle">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="17 1 21 5 17 9"></polyline>
+              <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
+              <polyline points="7 23 3 19 7 15"></polyline>
+              <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
+            </svg>
+          </div>
+          <div class="action-text">Repeat</div>
+        </div>
+
+        <div class="action-item" onclick="showToast('Receipt shared')">
+          <div class="action-circle">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+            </svg>
+          </div>
+          <div class="action-text">Share<br>Receipt</div>
+        </div>
+
+        <div class="action-item" onclick="closeDetail()">
+          <div class="action-circle">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="8" y1="6" x2="21" y2="6"></line>
+              <line x1="8" y1="12" x2="21" y2="12"></line>
+              <line x1="8" y1="18" x2="21" y2="18"></line>
+              <line x1="3" y1="6" x2="3.01" y2="6"></line>
+              <line x1="3" y1="12" x2="3.01" y2="12"></line>
+              <line x1="3" y1="18" x2="3.01" y2="18"></line>
+            </svg>
+          </div>
+          <div class="action-text">View<br>History</div>
+        </div>
+
+        <div class="action-item" onclick="showToast('Support ticket raised')">
+          <div class="action-circle">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+          </div>
+          <div class="action-text">Get Help</div>
+        </div>
+      </div>
+
+      <!-- Real UPI logo loaded from upi.png on GitHub -->
+      <div class="upi-footer">
+        <small>POWERED BY</small>
+        <img src="upi.png" alt="UPI Logo" class="upi-logo-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
+        <div style="display:none; font-size:16px; font-weight:800; font-style:italic; color:#4b5563;">UPI</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ==================== ENTRY MANAGER MODAL ==================== -->
+<div class="modal-overlay" id="managerModal">
+  <div class="modal-sheet">
+    <div class="modal-head">
+      <h3>Add / Manage History Entries</h3>
+      <button class="close-modal" onclick="closeManager()">✕</button>
+    </div>
+
+    <form id="entryForm" onsubmit="addNewEntry(event)">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Transaction Type</label>
+          <select id="fType">
+            <option value="sent">Payment made to (-₹)</option>
+            <option value="received">Payment received from (+₹)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Amount (₹)</label>
+          <input type="number" id="fAmount" placeholder="25" required />
+        </div>
+
+        <div class="form-group">
+          <label>Person / Merchant Name</label>
+          <input type="text" id="fName" placeholder="Rahul Kumar" required />
+        </div>
+
+        <div class="form-group">
+          <label>UPI ID (shown in list)</label>
+          <input type="text" id="fUpi" placeholder="rahul@mbk" required />
+        </div>
+
+        <div class="form-group">
+          <label>App Name</label>
+          <input type="text" id="fApp" placeholder="Mobikwik" value="Mobikwik" required />
+        </div>
+
+        <div class="form-group">
+          <label>Month Group</label>
+          <input type="text" id="fMonth" placeholder="nov 2026" value="nov 2026" required />
+        </div>
+
+        <div class="form-group full">
+          <label>Date & Time</label>
+          <input type="text" id="fDate" placeholder="18 Nov 2026, 05:45 PM" required />
+        </div>
+
+        <div class="form-group">
+          <label>UPI Transaction ID</label>
+          <input type="text" id="fTxId" placeholder="632217707221" required />
+        </div>
+
+        <div class="form-group">
+          <label>RRN Number</label>
+          <input type="text" id="fRrn" placeholder="668683301064" />
+        </div>
+
+        <div class="form-group">
+          <label>Other Party Name</label>
+          <input type="text" id="fFromName" value="Govinda Gangadhar Bhosale" required />
+        </div>
+
+        <div class="form-group">
+          <label>Other Party UPI</label>
+          <input type="text" id="fFromUpi" value="Airtel Thanks App • airtel@axis" required />
+        </div>
+
+        <div class="form-group full">
+          <label>Bank Account Line</label>
+          <input type="text" id="fBank" value="AIRTEL PAYMENTS BANK LTD XXXX 2010" />
+        </div>
+
+        <div class="form-group full">
+          <label>Notes</label>
+          <input type="text" id="fNotes" value="Payment from Airtel ThanksApp" />
+        </div>
+      </div>
+
+      <button type="submit" class="submit-entry-btn">+ Add Entry to History</button>
+    </form>
+
+    <div class="manage-list-title">Existing Entries (Tap Remove to delete)</div>
+    <div id="manageEntriesList"></div>
+  </div>
+</div>
+
+<div class="toast" id="toastBox">Copied!</div>
+
+<script>
+  const defaultTransactions = [
+    {
+      id: 1, type: 'sent', amount: '25', name: 'Farha Akhtari', upi: '8271191636@mbk', app: 'Mobikwik', month: 'nov 2026', date: '18 Nov 2026, 05:45 PM',
+      txId: '632217707221', rrn: '668683301064', fromName: 'Govinda Gangadhar Bhosale', fromUpi: 'Airtel Thanks App • airtel@axis', bank: 'AIRTEL PAYMENTS BANK LTD XXXX 2010', notes: 'Payment from Airtel ThanksApp'
+    },
+    {
+      id: 2, type: 'received', amount: '15', name: 'Zexx Merchant', upi: 'zexx8187@okaxis', app: 'Google Pay', month: 'nov 2026', date: '16 Nov 2026, 07:34 AM',
+      txId: '561116079293452', rrn: '668683301064', fromName: 'Zexx Merchant', fromUpi: 'Google Pay • zexx8187@okaxis', bank: 'AIRTEL PAYMENTS BANK LTD XXXX 2010', notes: 'Settlement'
+    },
+    {
+      id: 3, type: 'received', amount: '10', name: 'Farha Akhtari', upi: '8271191636@mbk', app: 'Mobikwik', month: 'nov 2026', date: '15 Nov 2026, 05:31 PM',
+      txId: '632215509812', rrn: '668681104421', fromName: 'Farha Akhtari', fromUpi: 'Mobikwik • 8271191636@mbk', bank: 'AIRTEL PAYMENTS BANK LTD XXXX 2010', notes: 'UPI Transfer'
+    },
+    {
+      id: 4, type: 'sent', amount: '1', name: 'Farha Akhtari', upi: '8271191636@mbk', app: 'Mobikwik', month: 'nov 2026', date: '15 Nov 2026, 04:31 PM',
+      txId: '632214401190', rrn: '668680019283', fromName: 'Govinda Gangadhar Bhosale', fromUpi: 'Airtel Thanks App • airtel@axis', bank: 'AIRTEL PAYMENTS BANK LTD XXXX 2010', notes: 'Verification payment'
+    },
+    {
+      id: 5, type: 'received', amount: '50', name: 'Amit Sharma', upi: 'amit99@paytm', app: 'Paytm', month: 'nov 2026', date: '14 Nov 2026, 02:15 PM',
+      txId: '632211223344', rrn: '668682233445', fromName: 'Amit Sharma', fromUpi: 'Paytm • amit99@paytm', bank: 'AIRTEL PAYMENTS BANK LTD XXXX 2010', notes: 'Cashback received'
+    },
+    {
+      id: 6, type: 'sent', amount: '120', name: 'Jio Recharge', upi: 'jio.bill@icici', app: 'JioPay', month: 'nov 2026', date: '12 Nov 2026, 11:10 AM',
+      txId: '632299887766', rrn: '668689988776', fromName: 'Govinda Gangadhar Bhosale', fromUpi: 'Airtel Thanks App • airtel@axis', bank: 'AIRTEL PAYMENTS BANK LTD XXXX 2010', notes: 'Mobile Recharge'
+    },
+    {
+      id: 7, type: 'received', amount: '500', name: 'Priya Singh', upi: 'priya@oksbi', app: 'PhonePe', month: 'nov 2026', date: '10 Nov 2026, 09:20 AM',
+      txId: '632244556677', rrn: '668684455667', fromName: 'Priya Singh', fromUpi: 'PhonePe • priya@oksbi', bank: 'AIRTEL PAYMENTS BANK LTD XXXX 2010', notes: 'Borrowed money'
+    },
+    {
+      id: 8, type: 'sent', amount: '45', name: 'Swiggy Foods', upi: 'swiggy@axis', app: 'Google Pay', month: 'nov 2026', date: '08 Nov 2026, 08:05 PM',
+      txId: '632233221100', rrn: '668683322110', fromName: 'Govinda Gangadhar Bhosale', fromUpi: 'Airtel Thanks App • airtel@axis', bank: 'AIRTEL PAYMENTS BANK LTD XXXX 2010', notes: 'Food Order'
+    },
+    {
+      id: 9, type: 'received', amount: '200', name: 'Rahul Verma', upi: 'rahul@ybl', app: 'PhonePe', month: 'nov 2026', date: '05 Nov 2026, 04:50 PM',
+      txId: '632255667788', rrn: '668685566778', fromName: 'Rahul Verma', fromUpi: 'PhonePe • rahul@ybl', bank: 'AIRTEL PAYMENTS BANK LTD XXXX 2010', notes: 'Split bill'
+    },
+    {
+      id: 10, type: 'sent', amount: '99', name: 'Netflix Subscription', upi: 'netflix@hdfcbank', app: 'Paytm', month: 'nov 2026', date: '01 Nov 2026, 12:00 PM',
+      txId: '632211009988', rrn: '668681100998', fromName: 'Govinda Gangadhar Bhosale', fromUpi: 'Airtel Thanks App • airtel@axis', bank: 'AIRTEL PAYMENTS BANK LTD XXXX 2010', notes: 'Monthly Plan'
+    }
+  ];
+
+  let transactions = JSON.parse(localStorage.getItem('upi_custom_history_v4')) || defaultTransactions;
+  let currentFilter = 'all';
+
+  function saveTransactions() {
+    localStorage.setItem('upi_custom_history_v4', JSON.stringify(transactions));
+  }
+
+  function getInitials(name) {
+    const parts = name.trim().split(/\s+/);
+    if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  }
+
+  function renderHistory() {
+    const container = document.getElementById('groupedListContainer');
+    container.innerHTML = '';
+
+    const filtered = transactions.filter(t => {
+      if (currentFilter === 'all') return true;
+      return t.type === currentFilter;
+    });
+
+    if (filtered.length === 0) {
+      container.innerHTML = `<div style="padding:40px 20px;text-align:center;color:#6b7280;font-size:14px;">No transactions found. Tap top-left arrow (←) to add.</div>`;
+      return;
+    }
+
+    const groups = {};
+    filtered.forEach(tx => {
+      const m = tx.month || 'nov 2026';
+      if (!groups[m]) groups[m] = [];
+      groups[m].push(tx);
+    });
+
+    Object.keys(groups).forEach(month => {
+      const monthDiv = document.createElement('div');
+      monthDiv.className = 'month-header';
+      monthDiv.textContent = month;
+      container.appendChild(monthDiv);
+
+      const listDiv = document.createElement('div');
+      listDiv.className = 'tx-list';
+
+      groups[month].forEach(tx => {
+        const isSent = tx.type === 'sent';
+        const item = document.createElement('div');
+        item.className = 'tx-item';
+        item.onclick = () => openDetail(tx.id);
+
+        item.innerHTML = `
+          <div class="tx-left">
+            <div class="rupee-circle">₹</div>
+            <div class="tx-info">
+              <div class="tx-label">${isSent ? 'Payment made to' : 'Payment received from'}</div>
+              <div class="tx-upi">${tx.upi}</div>
+              <div class="tx-date">${tx.date}</div>
+            </div>
+          </div>
+          <div class="tx-right">
+            <div class="tx-amount ${isSent ? 'sent' : 'received'}">${isSent ? '-₹' : '+₹'}${tx.amount}</div>
+            <div class="tx-via">
+              <span>${isSent ? 'paid via' : 'credited to'}</span>
+              <span class="k-badge">K</span>
+            </div>
+          </div>
+        `;
+        listDiv.appendChild(item);
+      });
+
+      container.appendChild(listDiv);
+    });
+  }
+
+  function openDetail(id) {
+    const tx = transactions.find(t => t.id === id);
+    if (!tx) return;
+
+    const isSent = tx.type === 'sent';
+    document.getElementById('detailDirectionLabel').textContent = isSent ? 'PAID TO' : 'RECEIVED TO';
+    document.getElementById('detailInitials').textContent = getInitials(tx.name);
+    document.getElementById('detailPartyName').textContent = tx.name;
+    document.getElementById('detailPartySub').textContent = `${tx.app} • ${tx.upi}`;
+    document.getElementById('detailAmount').textContent = `₹${tx.amount}`;
+    document.getElementById('detailDateTime').textContent = tx.date;
+    document.getElementById('detailTxId').textContent = tx.txId;
+
+    if (isSent) {
+      document.getElementById('detailMiddleHeading').textContent = 'Paid To';
+      document.getElementById('detailPaidToName').textContent = tx.name;
+      document.getElementById('detailPaidToUpi').textContent = `${tx.app} • ${tx.upi}`;
+      document.getElementById('detailBottomHeading').textContent = 'Paid From';
+      document.getElementById('detailPaidFromName').textContent = tx.fromName;
+      document.getElementById('detailPaidFromUpi').textContent = tx.fromUpi;
+    } else {
+      document.getElementById('detailMiddleHeading').textContent = 'Received From';
+      document.getElementById('detailPaidToName').textContent = tx.fromName;
+      document.getElementById('detailPaidToUpi').textContent = tx.fromUpi;
+      document.getElementById('detailBottomHeading').textContent = 'Credited To';
+      document.getElementById('detailPaidFromName').textContent = tx.name;
+      document.getElementById('detailPaidFromUpi').textContent = `${tx.app} • ${tx.upi}`;
+    }
+
+    document.getElementById('detailBankLine').textContent = tx.bank || '';
+    document.getElementById('detailRrn').textContent = tx.rrn || '668683301064';
+    document.getElementById('detailNotes').textContent = tx.notes || 'UPI Payment';
+
+    document.getElementById('timelineBox').classList.remove('open');
+    document.getElementById('statusChevron').classList.remove('open');
+
+    document.getElementById('historyScreen').style.display = 'none';
+    document.getElementById('detailScreen').style.display = 'block';
+    window.scrollTo(0, 0);
+  }
+
+  function closeDetail() {
+    document.getElementById('detailScreen').style.display = 'none';
+    document.getElementById('historyScreen').style.display = 'block';
+  }
+
+  function toggleTimeline() {
+    document.getElementById('timelineBox').classList.toggle('open');
+    document.getElementById('statusChevron').classList.toggle('open');
+  }
+
+  function openManager() {
+    renderManageList();
+    document.getElementById('managerModal').classList.add('open');
+  }
+
+  function closeManager() {
+    document.getElementById('managerModal').classList.remove('open');
+  }
+
+  function addNewEntry(e) {
+    e.preventDefault();
+    const newTx = {
+      id: Date.now(),
+      type: document.getElementById('fType').value,
+      amount: document.getElementById('fAmount').value.trim(),
+      name: document.getElementById('fName').value.trim(),
+      upi: document.getElementById('fUpi').value.trim(),
+      app: document.getElementById('fApp').value.trim(),
+      month: document.getElementById('fMonth').value.trim().toLowerCase(),
+      date: document.getElementById('fDate').value.trim(),
+      txId: document.getElementById('fTxId').value.trim(),
+      rrn: document.getElementById('fRrn').value.trim() || '668683301064',
+      fromName: document.getElementById('fFromName').value.trim(),
+      fromUpi: document.getElementById('fFromUpi').value.trim(),
+      bank: document.getElementById('fBank').value.trim(),
+      notes: document.getElementById('fNotes').value.trim()
+    };
+
+    transactions.unshift(newTx);
+    saveTransactions();
+    renderHistory();
+    renderManageList();
+    document.getElementById('entryForm').reset();
+    document.getElementById('fApp').value = 'Mobikwik';
+    document.getElementById('fMonth').value = 'nov 2026';
+    document.getElementById('fFromName').value = 'Govinda Gangadhar Bhosale';
+    document.getElementById('fFromUpi').value = 'Airtel Thanks App • airtel@axis';
+    document.getElementById('fBank').value = 'AIRTEL PAYMENTS BANK LTD XXXX 2010';
+    document.getElementById('fNotes').value = 'Payment from Airtel ThanksApp';
+    showToast('Entry added!');
+  }
+
+  function deleteEntry(id) {
+    transactions = transactions.filter(t => t.id !== id);
+    saveTransactions();
+    renderHistory();
+    renderManageList();
+    showToast('Entry removed');
+  }
+
+  function renderManageList() {
+    const list = document.getElementById('manageEntriesList');
+    if (transactions.length === 0) {
+      list.innerHTML = '<div style="font-size:13px;color:#6b7280;">No entries left.</div>';
+      return;
+    }
+    list.innerHTML = transactions.map(tx => `
+      <div class="manage-item">
+        <div class="manage-item-info">
+          <strong>${tx.name} (${tx.type === 'sent' ? '-₹' : '+₹'}${tx.amount})</strong>
+          <span>${tx.upi} • ${tx.date}</span>
+        </div>
+        <button class="delete-btn" onclick="deleteEntry(${tx.id})">Remove</button>
+      </div>
+    `).join('');
+  }
+
+  function switchTab(tab) {
+    const w = document.getElementById('tabWallet');
+    const n = document.getElementById('tabNcmc');
+    if (tab === 'wallet') {
+      w.className = 'tab-pill active';
+      n.className = 'tab-pill inactive';
+    } else {
+      n.className = 'tab-pill active';
+      w.className = 'tab-pill inactive';
+    }
+  }
+
+  function cycleFilter() {
+    if (currentFilter === 'all') {
+      currentFilter = 'sent';
+      document.getElementById('filterText').textContent = 'Sent';
+    } else if (currentFilter === 'sent') {
+      currentFilter = 'received';
+      document.getElementById('filterText').textContent = 'Received';
+    } else {
+      currentFilter = 'all';
+      document.getElementById('filterText').textContent = 'filter';
+    }
+    renderHistory();
+  }
+
+  function copyText(elementId) {
+    const text = document.getElementById(elementId).textContent;
+    navigator.clipboard.writeText(text).then(() => {
+      showToast('Copied: ' + text);
+    });
+  }
+
+  function showToast(msg) {
+    const toast = document.getElementById('toastBox');
+    toast.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 2000);
+  }
+
+  renderHistory();
+</script>
+</body>
+</html>
